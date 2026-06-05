@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QR Scan — Martiqaad Aroos</title>
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="admin.css" />
+  <script src="wedding-base.js"></script>
+  <script src="wedding-store.js"></script>
+  <script src="qr-lib.js"></script>
+</head>
+<body class="admin scan-page">
+
+  <div class="top-bar">
+    <div>
+      <h1>QR Scan</h1>
+      <p class="brand-sub">Akhri martiqaadka</p>
+    </div>
+    <div class="top-links">
+      <a href="home.html">Home</a>
+      <a href="index.html">Index</a>
+      <a href="class.html">Martiqaadka</a>
+    </div>
+  </div>
+
+  <div class="scan-hero">
+    <h2>Scan QR Code</h2>
+    <p>U jeedi kamaradda QR code-ka martiqaadka.<br>Xogta waa la akhriyaa oo martiqaadku wuu furmayaa.</p>
+  </div>
+
+  <div class="wrap">
+    <div class="scan-box">
+      <div id="reader"></div>
+    </div>
+
+    <div id="status" class="status loading">Kamaradda la furayo...</div>
+
+    <div class="manual">
+      <label>Ama ku dhaji link-ka QR halkan</label>
+      <textarea id="manualInput" placeholder="class.html?w=index#data=..."></textarea>
+      <button class="btn btn-gold" id="btnManual" style="margin-top:0.75rem;width:100%">Akhri Xogta</button>
+    </div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    let scanner = null;
+    let handled = false;
+
+    function showStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status ' + type;
+    }
+
+    // Web link toos ah — QR scan furayaa link-kan
+    if (QRLib.openFromWebLink()) {
+      showStatus('Xogta web link-ka laga akhriyayaa...', 'loading');
+    }
+
+    function openInvitation(key, data) {
+      if (data && typeof data === 'object' && !data._key) {
+        WeddingStore.save(key, data);
+      }
+      showStatus('Xogta waa la akhriyay! Martiqaadka la furayaa...', 'ok');
+      setTimeout(function () {
+        location.href = 'class.html?w=' + encodeURIComponent(key);
+      }, 700);
+    }
+
+    function processScan(text) {
+      if (handled) return;
+      const result = QRLib.parseScanResult(text);
+      if (!result) {
+        showStatus('QR-ka lama akhriyi karin. Isku day mar kale.', 'err');
+        handled = false;
+        return;
+      }
+      handled = true;
+      if (scanner) scanner.stop().catch(function () {});
+
+      if (result._url) {
+        showStatus('Martiqaadka la furayaa...', 'ok');
+        location.href = result._url.replace('scan.html', 'class.html');
+        return;
+      }
+
+      const key = result._key || 'index';
+      showStatus('Martiqaadka la furayaa...', 'ok');
+      location.href = 'class.html?w=' + encodeURIComponent(key);
+    }
+
+    document.getElementById('btnManual').addEventListener('click', function () {
+      const text = document.getElementById('manualInput').value.trim();
+      if (!text) { showStatus('Fadlan geli link ama xogta QR', 'err'); return; }
+      handled = false;
+      processScan(text);
+    });
+
+    (async function startScanner() {
+      if (new URLSearchParams(location.search).get('d')) return;
+      try {
+        await QRLib.loadScanner();
+        scanner = new Html5Qrcode('reader');
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras.length) {
+          showStatus('Kamarad lama helin. Isticmaal gelinta manual.', 'err');
+          return;
+        }
+        const cam = cameras.find(function (c) { return /back|rear|environment/i.test(c.label); }) || cameras[cameras.length > 1 ? 1 : 0];
+        showStatus('Scan garee QR code-ka...', 'loading');
+        await scanner.start(
+          cam.id,
+          { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
+          function (text) { processScan(text); },
+          function () {}
+        );
+      } catch (err) {
+        showStatus('Kamaradda lama furi karin. Isticmaal gelinta manual.', 'err');
+      }
+    })();
+  </script>
+</body>
+</html>

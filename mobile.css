@@ -1,0 +1,33 @@
+@media (max-width: 768px) {
+  .splash-monogram { width: 100px; height: 100px; }
+  .splash-initials { font-size: 2.2rem; }
+  .splash-names { font-size: clamp(1.6rem, 8vw, 2.2rem); }
+  .music-control { bottom: 1rem; right: 1rem; width: 46px; height: 46px; font-size: 1.1rem; }
+  .hero-frame { inset: 1rem; }
+  .hero-content { padding: 1.5rem 1rem; }
+  .photo-frame { width: 180px; height: 180px; }
+  .couple-name { font-size: 2rem; }
+  .lightbox-nav { width: 40px; height: 40px; font-size: 1.2rem; }
+  .lightbox-prev { left: 0.5rem; }
+  .lightbox-next { right: 0.5rem; }
+  .rsvp-strip p { font-size: 1rem; padding: 0 0.5rem; }
+}
+
+@media (max-width: 380px) {
+  .countdown { gap: 0.75rem; }
+  .countdown-item { padding: 0.85rem 1rem; min-width: 62px; }
+  .countdown-num { font-size: 1.5rem; }
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  .music-control { bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+  footer { padding-bottom: calc(3rem + env(safe-area-inset-bottom)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

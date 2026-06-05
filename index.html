@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Index — Martiqaad Aroos</title>
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="admin.css" />
+  <script src="wedding-base.js"></script>
+  <script src="wedding-store.js"></script>
+  <script src="image-tools.js"></script>
+  <script src="qr-lib.js"></script>
+  <style>
+    .qr-outline-btn { color: var(--gold) !important; border-color: var(--gold) !important; }
+    .img-size-box {
+      margin-top: 0.75rem;
+      padding: 0.65rem 0.75rem;
+      background: #fff;
+      border: 1px solid rgba(201,169,98,0.3);
+      border-radius: 6px;
+    }
+    .img-size-box .size-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin-bottom: 0.45rem; font-weight: 600; }
+    .size-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.45rem; }
+    .size-field label { font-size: 0.62rem; margin-bottom: 0.15rem; color: #999; }
+    .size-field input[type="number"] { margin-bottom: 0; padding: 0.4rem 0.5rem; font-size: 0.82rem; }
+    .size-field input[type="range"] { width: 100%; accent-color: var(--gold); margin: 0.2rem 0 0; }
+    .size-val { font-size: 0.68rem; color: #888; }
+    .img-size-info { font-size: 0.68rem; color: #888; margin-top: 0.35rem; }
+    .gallery-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 0.75rem; }
+    .gallery-card {
+      display: grid; grid-template-columns: minmax(200px, 280px) 1fr;
+      gap: 1rem; align-items: start;
+      background: #fff; border: 1px solid rgba(201,169,98,0.35);
+      border-radius: 10px; padding: 1rem; box-shadow: 0 2px 12px rgba(44,36,22,0.05);
+    }
+    .gal-preview-col { text-align: center; }
+    .gal-preview-frame {
+      position: relative; width: 100%; max-width: 260px; margin: 0 auto;
+      border: 3px solid var(--gold); border-radius: 8px; overflow: hidden;
+      background: #eee; transition: aspect-ratio 0.25s ease;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
+    }
+    .gal-preview-frame img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      min-height: 120px;
+    }
+    .gal-dim-badge {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(44,36,22,0.82); color: var(--gold-light);
+      font-size: 0.72rem; padding: 5px 8px; letter-spacing: 0.5px;
+    }
+    .gal-size-info { font-size: 0.68rem; color: #888; margin-top: 0.4rem; }
+    .gal-view-btn {
+      margin-top: 0.4rem; font-size: 0.68rem; color: var(--gold);
+      background: none; border: 1px solid var(--gold); border-radius: 4px;
+      padding: 0.3rem 0.6rem; cursor: pointer;
+    }
+    .gal-view-btn:hover { background: var(--blush); }
+    .gallery-controls .size-label { font-size: 0.65rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.4rem; font-weight: 600; }
+    .gallery-controls .size-row { grid-template-columns: 1fr 1fr 1fr; }
+    .gal-mini-btns { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 0.6rem; }
+    .gal-mini-btns button {
+      padding: 0.45rem 0.7rem; background: var(--dark); border: none; color: #fff;
+      cursor: pointer; font-size: 0.72rem; border-radius: 4px;
+    }
+    .gal-mini-btns button:hover { background: var(--gold); color: var(--dark); }
+    .gal-mini-btns button.gal-apply { background: linear-gradient(135deg, var(--gold), #a8893f); flex: 1; }
+    .gallery-add {
+      border: 2px dashed rgba(201,169,98,0.5); border-radius: 10px;
+      min-height: 100px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--gold); font-size: 2.5rem; background: var(--cream);
+    }
+    .gallery-add:hover { background: var(--blush); }
+    .gal-lightbox {
+      position: fixed; inset: 0; z-index: 9999; background: rgba(15,12,9,0.9);
+      display: none; align-items: center; justify-content: center; padding: 1.5rem;
+    }
+    .gal-lightbox.open { display: flex; }
+    .gal-lightbox img { max-width: 95vw; max-height: 85vh; border: 3px solid var(--gold); border-radius: 6px; }
+    .gal-lightbox-close {
+      position: absolute; top: 1rem; right: 1rem; width: 40px; height: 40px;
+      border-radius: 50%; background: var(--gold); border: none; color: #fff;
+      font-size: 1.3rem; cursor: pointer;
+    }
+    .gal-lightbox-info {
+      position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+      color: #fff; font-size: 0.85rem; background: rgba(0,0,0,0.5); padding: 0.5rem 1rem; border-radius: 20px;
+    }
+    @media (max-width: 650px) {
+      .gallery-card { grid-template-columns: 1fr; }
+      .size-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body class="admin">
+
+  <div class="top-bar">
+    <div>
+      <h1>Martiqaad Aroos</h1>
+      <p class="brand-sub">Admin Panel — Index</p>
+    </div>
+    <div class="top-links">
+      <a href="home.html">Home</a>
+      <a href="class.html">Martiqaadka</a>
+      <a href="scan.html">QR Scan</a>
+    </div>
+  </div>
+
+  <div class="admin-hero">
+    <p class="ornament">&#10022; &#10022; &#10022;</p>
+    <h2 id="heroTitle">Abuur Martiqaadkaaga</h2>
+    <p>Geli magacyada, sawirrada, muusig — QR code si toos ah ayuu u soo baxaa</p>
+  </div>
+
+  <div class="admin-steps">
+    <span class="active">1. Xogta</span>
+    <span class="active">2. Sawirrada</span>
+    <span class="active">3. QR Code</span>
+  </div>
+
+  <div class="wrap">
+
+    <!-- QR CODE — SOO BAXA TOOS -->
+    <div class="card qr-card">
+      <h2><span class="icon">&#9632;</span> QR Code</h2>
+      <div class="qr-layout">
+        <div class="qr-box" id="qrOutput"></div>
+        <div class="qr-info">
+          <p class="names-display" id="qrNames">Ahmed &amp; Amina</p>
+          <p>QR code waa <strong>link gaaban</strong>. Xogta waxay ku jirtaa <code style="color:var(--gold)">data/index.json</code> — ku rid GitHub markaad upload gareyso.</p>
+          <label style="display:block;font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.5);margin:0.75rem 0 0.35rem">GitHub Pages URL</label>
+          <input type="text" id="siteUrl" placeholder="https://username.github.io/repo-name" style="width:100%;padding:0.65rem 0.8rem;border:1px solid rgba(201,169,98,0.4);border-radius:6px;background:rgba(0,0,0,0.25);color:#fff;font-family:inherit;font-size:0.85rem;margin-bottom:0.5rem" />
+          <div class="btn-row">
+            <button type="button" class="btn btn-gold" id="btnSave">Kaydi + Soo Dejiso JSON</button>
+            <button type="button" class="btn btn-outline qr-outline-btn" id="btnExportJson">Soo Dejiso index.json</button>
+            <button type="button" class="btn btn-outline qr-outline-btn" id="btnDownloadQR">Soo Dejiso QR</button>
+            <button type="button" class="btn btn-outline qr-outline-btn" id="btnCopyLink">Copy Link</button>
+            <button type="button" class="btn btn-dark" id="btnPreview">Arag Martiqaadka</button>
+          </div>
+          <div id="status" class="status"></div>
+        </div>
+      </div>
+    </div>
+
+    <form id="weddingForm" onsubmit="return false;">
+
+      <div class="card">
+        <h2><span class="icon">&#9825;</span> Magacyada</h2>
+        <div class="grid2">
+          <div>
+            <label>Magaca Arooska (Wiilka)</label>
+            <input type="text" id="groom" required />
+          </div>
+          <div>
+            <label>Magaca Aroosadda (Gabadha)</label>
+            <input type="text" id="bride" required />
+          </div>
+        </div>
+        <label>Initials (tusaale: A &amp; A)</label>
+        <input type="text" id="initials" />
+        <div class="grid2">
+          <div>
+            <label>Taariikhda</label>
+            <input type="text" id="heroDate" placeholder="15 Juun 2026" />
+          </div>
+          <div>
+            <label>Waqtiga</label>
+            <input type="text" id="heroTime" placeholder="6:00 Galabnimo" />
+          </div>
+        </div>
+        <label>Countdown Date</label>
+        <input type="datetime-local" id="countdownDate" />
+        <label style="margin-top:0.5rem">Key (magaca kaydka)</label>
+        <input type="text" id="storageKey" value="index" />
+      </div>
+
+      <div class="card">
+        <h2><span class="icon">&#9873;</span> Goobta</h2>
+        <label>Magaca Goobta</label>
+        <input type="text" id="venueName" />
+        <label>Cinwaanka</label>
+        <input type="text" id="venueAddress" />
+        <label>Link Khariidadda (Google Maps)</label>
+        <input type="text" id="venueMapUrl" placeholder="https://maps.google.com/..." />
+      </div>
+
+      <div class="card">
+        <h2><span class="icon">&#10077;</span> Sheekada Jacaylka</h2>
+        <label>Qoraalka</label>
+        <textarea id="loveQuote"></textarea>
+        <label>Saxiixa</label>
+        <input type="text" id="loveSign" />
+      </div>
+
+      <div class="card">
+        <h2><span class="icon">&#9786;</span> Sawirrada — Edit &amp; Beddel</h2>
+
+        <div class="img-edit">
+          <p class="img-edit-label">Sawirka Hero (Background Weyn)</p>
+          <div class="img-preview-wrap wide">
+            <img id="heroBgPreview" class="img-preview wide-img empty" alt="" />
+            <div id="heroBgPlaceholder" class="img-placeholder wide-ph">+</div>
+          </div>
+          <div class="img-actions">
+            <button type="button" class="btn btn-gold btn-sm" onclick="pickImage('heroBgFile')">Beddel Sawir</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeImage('heroBg')">Tirtir</button>
+          </div>
+          <input type="file" id="heroBgFile" accept="image/*" />
+          <div class="img-size-box" id="heroSizeBox"></div>
+          <p class="img-size-info" id="heroBgSizeInfo"></p>
+        </div>
+
+        <div class="grid2">
+          <div class="img-edit">
+            <p class="img-edit-label">Sawirka Arooska</p>
+            <div class="img-preview-wrap">
+              <img id="groomPhotoPreview" class="img-preview circle empty" alt="" />
+              <div id="groomPhotoPlaceholder" class="img-placeholder">+</div>
+            </div>
+            <div class="img-actions">
+              <button type="button" class="btn btn-gold btn-sm" onclick="pickImage('groomPhotoFile')">Beddel</button>
+              <button type="button" class="btn btn-danger btn-sm" onclick="removeImage('groom')">Tirtir</button>
+            </div>
+            <input type="file" id="groomPhotoFile" accept="image/*" />
+            <label style="margin-top:0.75rem">Doorka</label>
+            <input type="text" id="groomRole" placeholder="Arooski" />
+            <label>Sharaxaad</label>
+            <input type="text" id="groomDesc" placeholder="Wiilka arooska" />
+            <div class="img-size-box" id="groomSizeBox"></div>
+            <p class="img-size-info" id="groomPhotoSizeInfo"></p>
+          </div>
+
+          <div class="img-edit">
+            <p class="img-edit-label">Sawirka Aroosadda</p>
+            <div class="img-preview-wrap">
+              <img id="bridePhotoPreview" class="img-preview circle empty" alt="" />
+              <div id="bridePhotoPlaceholder" class="img-placeholder">+</div>
+            </div>
+            <div class="img-actions">
+              <button type="button" class="btn btn-gold btn-sm" onclick="pickImage('bridePhotoFile')">Beddel</button>
+              <button type="button" class="btn btn-danger btn-sm" onclick="removeImage('bride')">Tirtir</button>
+            </div>
+            <input type="file" id="bridePhotoFile" accept="image/*" />
+            <label style="margin-top:0.75rem">Doorka</label>
+            <input type="text" id="brideRole" placeholder="Aroosadda" />
+            <label>Sharaxaad</label>
+            <input type="text" id="brideDesc" placeholder="Gabadha arooska" />
+            <div class="img-size-box" id="brideSizeBox"></div>
+            <p class="img-size-info" id="bridePhotoSizeInfo"></p>
+          </div>
+        </div>
+
+        <p class="img-edit-label" style="margin-top:1rem">Gallery — sawir walba wuxuu leeyahay size u gaar ah</p>
+        <div class="gallery-list" id="galleryGrid"></div>
+        <input type="file" id="galleryFiles" accept="image/*" multiple />
+
+        <div class="gal-lightbox" id="galLightbox">
+          <button class="gal-lightbox-close" id="galLightboxClose">&times;</button>
+          <img id="galLightboxImg" src="" alt="" />
+          <p class="gal-lightbox-info" id="galLightboxInfo"></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="icon">&#9835;</span> Muusig</h2>
+        <div class="music-box">
+          <span class="music-icon">&#9835;</span>
+          <div class="music-info">
+            <p id="musicName">Muusig ma jiro — soo geli fayl MP3</p>
+          </div>
+          <button type="button" class="btn btn-gold btn-sm" onclick="pickImage('musicFile')">Soo Geli</button>
+          <button type="button" class="btn btn-danger btn-sm" id="btnRemoveMusic">Tirtir</button>
+          <input type="file" id="musicFile" accept="audio/*" />
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <script>
+    const status = document.getElementById('status');
+    let currentData = WeddingBase.defaultConfig();
+    let galleryImages = [];
+    let lastQrUrl = '';
+
+    function showStatus(msg, ok) {
+      status.textContent = msg;
+      status.className = 'status ' + (ok ? 'ok' : 'err');
+    }
+
+    function pickImage(inputId) {
+      document.getElementById(inputId).click();
+    }
+
+    const DEFAULT_IMG = WeddingBase.defaultConfig().imageSettings;
+
+    function readSizeInputs(prefix) {
+      const w = document.getElementById(prefix + '_w');
+      const h = document.getElementById(prefix + '_h');
+      const q = document.getElementById(prefix + '_q');
+      if (!w || !h || !q) return null;
+      return {
+        maxW: parseInt(w.value, 10) || 600,
+        maxH: parseInt(h.value, 10) || 600,
+        quality: (parseInt(q.value, 10) || 75) / 100
+      };
+    }
+
+    function sizeBoxHtml(prefix, s, showApply) {
+      s = s || DEFAULT_IMG.gallery;
+      return '<p class="size-label">Cabbirka Sawirkan</p>' +
+        '<div class="size-row">' +
+        '<div class="size-field"><label>W (px)</label><input type="number" id="' + prefix + '_w" min="100" max="2400" step="50" value="' + s.maxW + '"></div>' +
+        '<div class="size-field"><label>H (px)</label><input type="number" id="' + prefix + '_h" min="100" max="1600" step="50" value="' + s.maxH + '"></div>' +
+        '<div class="size-field"><label>Q <span class="size-val" id="' + prefix + '_qv">' + (s.quality > 1 ? s.quality : Math.round(s.quality * 100)) + '%</span></label>' +
+        '<input type="range" id="' + prefix + '_q" min="30" max="100" value="' + (s.quality > 1 ? s.quality : Math.round(s.quality * 100)) + '"></div></div>' +
+        (showApply ? '<button type="button" class="btn btn-outline btn-sm" style="margin-top:0.5rem;width:100%" onclick="applyResize(\'' + prefix + '\')">Cusboonaysii Cabbirka</button>' : '');
+    }
+
+    function bindSizeInputs(prefix, onChange) {
+      const q = document.getElementById(prefix + '_q');
+      const qv = document.getElementById(prefix + '_qv');
+      if (q && qv) {
+        q.oninput = function () { qv.textContent = q.value + '%'; if (onChange) onChange(); };
+      }
+      [prefix + '_w', prefix + '_h', prefix + '_q'].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el && onChange) el.addEventListener('change', onChange);
+      });
+    }
+
+    function initSingleSizeBoxes(settings) {
+      const s = settings || currentData.imageSettings || DEFAULT_IMG;
+      document.getElementById('heroSizeBox').innerHTML = sizeBoxHtml('hero', s.hero || DEFAULT_IMG.hero, true);
+      document.getElementById('groomSizeBox').innerHTML = sizeBoxHtml('groom', s.groom || s.couple || DEFAULT_IMG.groom, true);
+      document.getElementById('brideSizeBox').innerHTML = sizeBoxHtml('bride', s.bride || s.couple || DEFAULT_IMG.bride, true);
+      bindSizeInputs('hero', function () { syncImageSettings(); });
+      bindSizeInputs('groom', function () { syncImageSettings(); });
+      bindSizeInputs('bride', function () { syncImageSettings(); });
+    }
+
+    function syncImageSettings() {
+      if (!currentData.imageSettings) currentData.imageSettings = {};
+      ['hero', 'groom', 'bride'].forEach(function (k) {
+        const r = readSizeInputs(k);
+        if (r) currentData.imageSettings[k] = { maxW: r.maxW, maxH: r.maxH, quality: Math.round(r.quality * 100) };
+      });
+      autoSaveAndQR();
+    }
+
+    function collectImageSettings() {
+      const out = Object.assign({}, DEFAULT_IMG, currentData.imageSettings || {});
+      ['hero', 'groom', 'bride'].forEach(function (k) {
+        const r = readSizeInputs(k);
+        if (r) out[k] = { maxW: r.maxW, maxH: r.maxH, quality: Math.round(r.quality * 100) };
+      });
+      return out;
+    }
+
+    function normalizeGalleryItem(item) {
+      const def = DEFAULT_IMG.gallery;
+      if (typeof item === 'string') return { src: item, _original: item, maxW: def.maxW, maxH: def.maxH, quality: def.quality };
+      const src = item.src || '';
+      return {
+        src: src,
+        _original: item._original || src,
+        maxW: item.maxW || def.maxW,
+        maxH: item.maxH || def.maxH,
+        quality: item.quality > 1 ? item.quality : (item.quality || def.quality)
+      };
+    }
+
+    window.applyResize = async function (prefix) {
+      const settings = readSizeInputs(prefix);
+      if (!settings) return;
+      let src = '';
+      if (prefix === 'hero') src = currentData.heroBg;
+      else if (prefix === 'groom') src = currentData.couple && currentData.couple[0] ? currentData.couple[0].photo : '';
+      else if (prefix === 'bride') src = currentData.couple && currentData.couple[1] ? currentData.couple[1].photo : '';
+      if (!src) { showStatus('Sawir ma jiro — soo geli marka hore', false); return; }
+      const resized = await ImageTools.compress(src, settings.maxW, settings.maxH, settings.quality);
+      if (prefix === 'hero') {
+        currentData.heroBg = resized;
+        showPreview('heroBgPreview', 'heroBgPlaceholder', resized);
+        showImageInfo('heroBgSizeInfo', resized, settings);
+      } else if (prefix === 'groom') {
+        currentData.couple[0].photo = resized;
+        showPreview('groomPhotoPreview', 'groomPhotoPlaceholder', resized);
+        showImageInfo('groomPhotoSizeInfo', resized, settings);
+      } else if (prefix === 'bride') {
+        currentData.couple[1].photo = resized;
+        showPreview('bridePhotoPreview', 'bridePhotoPlaceholder', resized);
+        showImageInfo('bridePhotoSizeInfo', resized, settings);
+      }
+      syncImageSettings();
+      showStatus('Cabbirka waa la cusboonaysiiyay ✓', true);
+    };
+
+    window.applyGalleryResize = async function (i) {
+      const item = galleryImages[i];
+      if (!item || !item.src) return;
+      const w = document.getElementById('gal_' + i + '_w');
+      const h = document.getElementById('gal_' + i + '_h');
+      const q = document.getElementById('gal_' + i + '_q');
+      const maxW = parseInt(w.value, 10) || 600;
+      const maxH = parseInt(h.value, 10) || 600;
+      const quality = (parseInt(q.value, 10) || 70) / 100;
+      const source = item._original || item.src;
+      item.src = await ImageTools.compress(source, maxW, maxH, quality);
+      item._original = source;
+      item.maxW = maxW;
+      item.maxH = maxH;
+      item.quality = Math.round(quality * 100);
+      const imgEl = document.getElementById('gal_img_' + i);
+      if (imgEl) imgEl.src = item.src;
+      updateGalleryPreview(i);
+      autoSaveAndQR();
+      showStatus('Gallery #' + (i + 1) + ' cabbir waa la kaydiyay ✓', true);
+    };
+
+    function formatBytes(dataUrl) {
+      if (!dataUrl) return '';
+      const bytes = Math.round((dataUrl.length * 3) / 4);
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function showImageInfo(infoId, dataUrl, settings) {
+      const el = document.getElementById(infoId);
+      if (!el || !dataUrl) { if (el) el.textContent = ''; return; }
+      const img = new Image();
+      img.onload = function () {
+        el.textContent = img.width + '×' + img.height + 'px · ' + formatBytes(dataUrl) + ' · Q' + Math.round(settings.quality * 100) + '%';
+      };
+      img.src = dataUrl;
+    }
+
+    function showPreview(imgId, phId, url) {
+      const img = document.getElementById(imgId);
+      const ph = document.getElementById(phId);
+      if (url) {
+        img.src = url;
+        img.classList.remove('empty');
+        if (ph) ph.style.display = 'none';
+      } else {
+        img.src = '';
+        img.classList.add('empty');
+        if (ph) ph.style.display = 'flex';
+      }
+    }
+
+    function removeImage(type) {
+      if (type === 'heroBg') {
+        currentData.heroBg = '';
+        showPreview('heroBgPreview', 'heroBgPlaceholder', '');
+        document.getElementById('heroBgSizeInfo').textContent = '';
+      } else if (type === 'groom') {
+        if (currentData.couple) currentData.couple[0].photo = '';
+        showPreview('groomPhotoPreview', 'groomPhotoPlaceholder', '');
+        document.getElementById('groomPhotoSizeInfo').textContent = '';
+      } else if (type === 'bride') {
+        if (currentData.couple) currentData.couple[1].photo = '';
+        showPreview('bridePhotoPreview', 'bridePhotoPlaceholder', '');
+        document.getElementById('bridePhotoSizeInfo').textContent = '';
+      }
+      autoSaveAndQR();
+    }
+
+    let galleryPreviewTimers = {};
+
+    function updateGalleryPreview(i) {
+      const wEl = document.getElementById('gal_' + i + '_w');
+      const hEl = document.getElementById('gal_' + i + '_h');
+      const qEl = document.getElementById('gal_' + i + '_q');
+      if (!wEl || !hEl) return;
+      const maxW = parseInt(wEl.value, 10) || 600;
+      const maxH = parseInt(hEl.value, 10) || 600;
+      const quality = qEl ? parseInt(qEl.value, 10) || 70 : 70;
+      const frame = document.getElementById('gal_frame_' + i);
+      const badge = document.getElementById('gal_badge_' + i);
+      const info = document.getElementById('gal_info_' + i);
+      if (frame) frame.style.aspectRatio = maxW + ' / ' + maxH;
+      if (badge) badge.textContent = maxW + ' × ' + maxH + ' px · Q' + quality + '%';
+      if (info && galleryImages[i]) {
+        const img = new Image();
+        img.onload = function () {
+          info.textContent = 'Hadda: ' + img.width + '×' + img.height + 'px · ' + formatBytes(galleryImages[i].src);
+        };
+        img.src = galleryImages[i].src;
+      }
+      if (galleryImages[i]) {
+        galleryImages[i].maxW = maxW;
+        galleryImages[i].maxH = maxH;
+        galleryImages[i].quality = quality;
+      }
+    }
+
+    function liveGalleryPreview(i) {
+      clearTimeout(galleryPreviewTimers[i]);
+      galleryPreviewTimers[i] = setTimeout(async function () {
+        const item = galleryImages[i];
+        if (!item || !item.src) return;
+        const wEl = document.getElementById('gal_' + i + '_w');
+        const hEl = document.getElementById('gal_' + i + '_h');
+        const qEl = document.getElementById('gal_' + i + '_q');
+        const maxW = parseInt(wEl.value, 10) || 600;
+        const maxH = parseInt(hEl.value, 10) || 600;
+        const quality = (parseInt(qEl.value, 10) || 70) / 100;
+        const preview = await ImageTools.compress(item._original || item.src, maxW, maxH, quality);
+        const imgEl = document.getElementById('gal_img_' + i);
+        if (imgEl) imgEl.src = preview;
+        const info = document.getElementById('gal_info_' + i);
+        if (info) {
+          const pimg = new Image();
+          pimg.onload = function () {
+            info.textContent = 'Preview: ' + pimg.width + '×' + pimg.height + 'px · ' + formatBytes(preview);
+          };
+          pimg.src = preview;
+        }
+      }, 350);
+    }
+
+    function bindGalleryItem(i) {
+      updateGalleryPreview(i);
+      ['gal_' + i + '_w', 'gal_' + i + '_h', 'gal_' + i + '_q'].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', function () {
+          if (id.endsWith('_q')) {
+            const qv = document.getElementById('gal_' + i + '_qv');
+            if (qv) qv.textContent = el.value + '%';
+          }
+          updateGalleryPreview(i);
+          liveGalleryPreview(i);
+        });
+      });
+    }
+
+    window.viewGalleryImage = function (i) {
+      const item = galleryImages[i];
+      if (!item) return;
+      const lb = document.getElementById('galLightbox');
+      const img = document.getElementById('galLightboxImg');
+      const info = document.getElementById('galLightboxInfo');
+      img.src = item.src;
+      info.textContent = 'Sawir #' + (i + 1) + ' — ' + item.maxW + '×' + item.maxH + 'px · Q' + (item.quality > 1 ? item.quality : 70) + '%';
+      lb.classList.add('open');
+    };
+
+    function renderGallery() {
+      const grid = document.getElementById('galleryGrid');
+      let html = galleryImages.map(function (item, i) {
+        if (!item._original) item._original = item.src;
+        const q = item.quality > 1 ? item.quality : Math.round((item.quality || 70));
+        const ratio = item.maxW + ' / ' + item.maxH;
+        return '<div class="gallery-card">' +
+          '<div class="gal-preview-col">' +
+          '<div class="gal-preview-frame" id="gal_frame_' + i + '" style="aspect-ratio:' + ratio + '">' +
+          '<img id="gal_img_' + i + '" src="' + item.src + '" alt="Sawir ' + (i+1) + '">' +
+          '<span class="gal-dim-badge" id="gal_badge_' + i + '">' + item.maxW + ' × ' + item.maxH + ' px · Q' + q + '%</span></div>' +
+          '<p class="gal-size-info" id="gal_info_' + i + '"></p>' +
+          '<button type="button" class="gal-view-btn" onclick="viewGalleryImage(' + i + ')">&#128065; Arag Weyn</button>' +
+          '</div>' +
+          '<div class="gallery-controls">' +
+          '<p class="size-label">Cabbirka Sawirkan #' + (i + 1) + '</p>' +
+          '<div class="size-row">' +
+          '<div class="size-field"><label>Width (px)</label><input type="number" id="gal_' + i + '_w" min="100" max="1200" step="50" value="' + item.maxW + '"></div>' +
+          '<div class="size-field"><label>Height (px)</label><input type="number" id="gal_' + i + '_h" min="100" max="1200" step="50" value="' + item.maxH + '"></div>' +
+          '<div class="size-field"><label>Quality <span id="gal_' + i + '_qv">' + q + '%</span></label>' +
+          '<input type="range" id="gal_' + i + '_q" min="30" max="100" value="' + q + '"></div></div>' +
+          '<div class="gal-mini-btns">' +
+          '<button type="button" class="gal-apply" onclick="applyGalleryResize(' + i + ')">&#8644; Kaydi Cabbirka</button>' +
+          '<button type="button" onclick="moveGallery(' + i + ',-1)">&#8593;</button>' +
+          '<button type="button" onclick="moveGallery(' + i + ',1)">&#8595;</button>' +
+          '<button type="button" onclick="replaceGallery(' + i + ')">&#9998;</button>' +
+          '<button type="button" onclick="deleteGallery(' + i + ')">&#10005;</button>' +
+          '</div></div></div>';
+      }).join('');
+      html += '<div class="gallery-add" onclick="pickImage(\'galleryFiles\')" title="Ku dar sawir">+</div>';
+      grid.innerHTML = html;
+      galleryImages.forEach(function (_, i) { bindGalleryItem(i); });
+    }
+
+    document.getElementById('galLightboxClose').addEventListener('click', function () {
+      document.getElementById('galLightbox').classList.remove('open');
+    });
+    document.getElementById('galLightbox').addEventListener('click', function (e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+
+    window.moveGallery = function (i, dir) {
+      const j = i + dir;
+      if (j < 0 || j >= galleryImages.length) return;
+      const tmp = galleryImages[i];
+      galleryImages[i] = galleryImages[j];
+      galleryImages[j] = tmp;
+      renderGallery();
+      autoSaveAndQR();
+    };
+
+    window.deleteGallery = function (i) {
+      galleryImages.splice(i, 1);
+      renderGallery();
+      autoSaveAndQR();
+    };
+
+    let replaceGalleryIdx = -1;
+    window.replaceGallery = function (i) {
+      replaceGalleryIdx = i;
+      const inp = document.createElement('input');
+      inp.type = 'file';
+      inp.accept = 'image/*';
+      inp.onchange = async function () {
+        if (!inp.files[0]) return;
+        const item = galleryImages[i] || normalizeGalleryItem({});
+        const settings = { maxW: item.maxW, maxH: item.maxH, quality: (item.quality > 1 ? item.quality : item.quality * 100) / 100 };
+        const src = await ImageTools.fileToDataUrl(inp.files[0], item.maxW, item.maxH, settings.quality);
+        galleryImages[i] = { src: src, _original: src, maxW: item.maxW, maxH: item.maxH, quality: item.quality > 1 ? item.quality : Math.round(settings.quality * 100) };
+        renderGallery();
+        autoSaveAndQR();
+      };
+      inp.click();
+    };
+
+    function loadForm(data) {
+      document.getElementById('groom').value = data.groom || '';
+      document.getElementById('bride').value = data.bride || '';
+      document.getElementById('initials').value = data.initials || '';
+      document.getElementById('heroDate').value = data.heroDate || '';
+      document.getElementById('heroTime').value = data.heroTime || '';
+      if (data.countdownDate) {
+        const d = new Date(data.countdownDate);
+        if (!isNaN(d)) document.getElementById('countdownDate').value = d.toISOString().slice(0, 16);
+      }
+      document.getElementById('venueName').value = data.venueName || '';
+      document.getElementById('venueAddress').value = data.venueAddress || '';
+      document.getElementById('venueMapUrl').value = data.venueMapUrl || '';
+      document.getElementById('loveQuote').value = data.loveQuote || '';
+      document.getElementById('loveSign').value = data.loveSign || '';
+      document.getElementById('siteUrl').value = data.siteUrl || '';
+      if (data.couple) {
+        document.getElementById('groomRole').value = data.couple[0]?.role || '';
+        document.getElementById('groomDesc').value = data.couple[0]?.desc || '';
+        document.getElementById('brideRole').value = data.couple[1]?.role || '';
+        document.getElementById('brideDesc').value = data.couple[1]?.desc || '';
+        showPreview('groomPhotoPreview', 'groomPhotoPlaceholder', data.couple[0]?.photo || '');
+        showPreview('bridePhotoPreview', 'bridePhotoPlaceholder', data.couple[1]?.photo || '');
+      }
+      showPreview('heroBgPreview', 'heroBgPlaceholder', data.heroBg || '');
+      currentData.imageSettings = data.imageSettings || DEFAULT_IMG;
+      initSingleSizeBoxes(currentData.imageSettings);
+      if (data.heroBg) showImageInfo('heroBgSizeInfo', data.heroBg, readSizeInputs('hero') || { quality: 0.75 });
+      if (data.couple && data.couple[0]?.photo) showImageInfo('groomPhotoSizeInfo', data.couple[0].photo, readSizeInputs('groom') || { quality: 0.75 });
+      if (data.couple && data.couple[1]?.photo) showImageInfo('bridePhotoSizeInfo', data.couple[1].photo, readSizeInputs('bride') || { quality: 0.75 });
+      galleryImages = (data.gallery || []).map(normalizeGalleryItem);
+      renderGallery();
+      if (data.musicUrl) {
+        document.getElementById('musicName').textContent = 'Muusig waa la kaydiyay ✓';
+      }
+      updateQrNames();
+    }
+
+    function updateQrNames() {
+      const g = document.getElementById('groom').value.trim() || 'Ahmed';
+      const b = document.getElementById('bride').value.trim() || 'Amina';
+      document.getElementById('qrNames').textContent = g + ' & ' + b;
+      const ht = document.getElementById('heroTitle');
+      if (ht) ht.textContent = g + ' & ' + b;
+    }
+
+    function collectData() {
+      const groom = document.getElementById('groom').value.trim();
+      const bride = document.getElementById('bride').value.trim();
+      const cd = document.getElementById('countdownDate').value;
+      if (!currentData.couple) currentData.couple = WeddingBase.defaultConfig().couple;
+      return Object.assign({}, currentData, {
+        groom, bride,
+        initials: document.getElementById('initials').value || (groom[0] + ' & ' + bride[0]),
+        heroDate: document.getElementById('heroDate').value,
+        heroTime: document.getElementById('heroTime').value,
+        countdownDate: cd ? new Date(cd).toISOString() : currentData.countdownDate,
+        venueName: document.getElementById('venueName').value,
+        venueAddress: document.getElementById('venueAddress').value,
+        venueMapUrl: document.getElementById('venueMapUrl').value,
+        loveQuote: document.getElementById('loveQuote').value,
+        loveSign: document.getElementById('loveSign').value || (groom + ' & ' + bride),
+        siteUrl: document.getElementById('siteUrl').value.trim(),
+        imageSettings: collectImageSettings(),
+        couple: [
+          Object.assign({}, currentData.couple[0], {
+            name: groom,
+            role: document.getElementById('groomRole').value || 'Arooski',
+            desc: document.getElementById('groomDesc').value || 'Wiilka arooska'
+          }),
+          Object.assign({}, currentData.couple[1], {
+            name: bride,
+            role: document.getElementById('brideRole').value || 'Aroosadda',
+            desc: document.getElementById('brideDesc').value || 'Gabadha arooska'
+          })
+        ],
+        gallery: galleryImages.map(function (g) {
+          return { src: g.src, maxW: g.maxW, maxH: g.maxH, quality: g.quality };
+        })
+      });
+    }
+
+    function saveAndGenerateQR(downloadJson) {
+      const key = document.getElementById('storageKey').value.trim() || 'index';
+      const data = collectData();
+      currentData = data;
+      WeddingStore.save(key, data);
+      if (downloadJson) WeddingStore.downloadJson(key, data);
+      lastQrUrl = QRLib.buildUrl(key, data, data.siteUrl);
+      let warning = '';
+      if (!QRLib.isWebReady(lastQrUrl)) {
+        warning = 'Geli GitHub URL kor ku qoran. Soo dejiso index.json oo ku rid folder-ka data/ ka dib upload GitHub.';
+      }
+      QRLib.showQR('qrOutput', lastQrUrl, { warning: warning, key: key });
+      updateQrNames();
+      return { key, data };
+    }
+
+    function autoSaveAndQR() {
+      saveAndGenerateQR(false);
+    }
+
+    async function handleImage(inputId, previewId, phId, setter, prefix, sizeInfoId) {
+      const file = document.getElementById(inputId).files[0];
+      if (!file) return;
+      const settings = readSizeInputs(prefix);
+      if (!settings) return;
+      const dataUrl = await ImageTools.fileToDataUrl(file, settings.maxW, settings.maxH, settings.quality);
+      showPreview(previewId, phId, dataUrl);
+      setter(dataUrl);
+      showImageInfo(sizeInfoId, dataUrl, settings);
+      syncImageSettings();
+      document.getElementById(inputId).value = '';
+      showStatus('Sawirka waa la soo geliyay (' + settings.maxW + '×' + settings.maxH + ') ✓', true);
+    }
+
+    document.getElementById('heroBgFile').addEventListener('change', function () {
+      handleImage('heroBgFile', 'heroBgPreview', 'heroBgPlaceholder', function (u) { currentData.heroBg = u; }, 'hero', 'heroBgSizeInfo');
+    });
+    document.getElementById('groomPhotoFile').addEventListener('change', function () {
+      handleImage('groomPhotoFile', 'groomPhotoPreview', 'groomPhotoPlaceholder', function (u) {
+        if (!currentData.couple) currentData.couple = WeddingBase.defaultConfig().couple;
+        currentData.couple[0].photo = u;
+      }, 'groom', 'groomPhotoSizeInfo');
+    });
+    document.getElementById('bridePhotoFile').addEventListener('change', function () {
+      handleImage('bridePhotoFile', 'bridePhotoPreview', 'bridePhotoPlaceholder', function (u) {
+        if (!currentData.couple) currentData.couple = WeddingBase.defaultConfig().couple;
+        currentData.couple[1].photo = u;
+      }, 'bride', 'bridePhotoSizeInfo');
+    });
+    document.getElementById('galleryFiles').addEventListener('change', async function () {
+      const files = Array.from(this.files);
+      const def = DEFAULT_IMG.gallery;
+      for (const f of files) {
+        const src = await ImageTools.fileToDataUrl(f, def.maxW, def.maxH, def.quality / 100);
+        galleryImages.push({ src: src, _original: src, maxW: def.maxW, maxH: def.maxH, quality: def.quality });
+      }
+      this.value = '';
+      renderGallery();
+      autoSaveAndQR();
+      showStatus('Gallery waa la cusboonaysiiyay ✓', true);
+    });
+    document.getElementById('musicFile').addEventListener('change', async function () {
+      const file = this.files[0];
+      if (!file) return;
+      currentData.musicUrl = await ImageTools.readFile(file);
+      document.getElementById('musicName').textContent = file.name + ' ✓';
+      this.value = '';
+      autoSaveAndQR();
+      showStatus('Muusig waa la kaydiyay ✓', true);
+    });
+    document.getElementById('btnRemoveMusic').addEventListener('click', function () {
+      currentData.musicUrl = '';
+      document.getElementById('musicName').textContent = 'Muusig ma jiro — soo geli fayl MP3';
+      autoSaveAndQR();
+    });
+
+    document.getElementById('btnSave').addEventListener('click', function () {
+      const { key } = saveAndGenerateQR(true);
+      showStatus('Kaydiyay! index.json waa la soo dejiyay — ku rid data/ folder GitHub. Key: ' + key, true);
+    });
+
+    document.getElementById('btnExportJson').addEventListener('click', function () {
+      const { key, data } = saveAndGenerateQR(false);
+      WeddingStore.downloadJson(key, data);
+      showStatus('index.json waa la soo dejiyay! Ku rid: data/' + key + '.json', true);
+    });
+
+    document.getElementById('btnPreview').addEventListener('click', function () {
+      const { key } = saveAndGenerateQR(false);
+      window.open('class.html?w=' + encodeURIComponent(key), '_blank');
+    });
+
+    document.getElementById('siteUrl').addEventListener('change', autoSaveAndQR);
+    document.getElementById('siteUrl').addEventListener('blur', autoSaveAndQR);
+
+    document.getElementById('btnDownloadQR').addEventListener('click', function () {
+      QRLib.downloadQR();
+    });
+
+    document.getElementById('btnCopyLink').addEventListener('click', function () {
+      if (!lastQrUrl) saveAndGenerateQR(false);
+      navigator.clipboard.writeText(lastQrUrl).then(function () {
+        showStatus('Web link-ka waa la copy gareeyay!', true);
+      }).catch(function () {
+        prompt('Copy web link-kan:', lastQrUrl);
+      });
+    });
+
+    // Auto-update QR names as user types
+    ['groom', 'bride'].forEach(function (id) {
+      document.getElementById(id).addEventListener('input', updateQrNames);
+    });
+
+    // Load saved + show QR immediately
+    const saved = WeddingStore.load('index');
+    if (saved) currentData = Object.assign(WeddingBase.defaultConfig(), saved);
+    initSingleSizeBoxes(currentData.imageSettings);
+    loadForm(currentData);
+    saveAndGenerateQR();
+  </script>
+</body>
+</html>

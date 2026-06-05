@@ -1,0 +1,13 @@
+:root {
+  --gold: #c9a962;
+  --gold-light: #e8d5a3;
+  --blush: #f5e6e0;
+  --cream: #faf7f2;
+  --dark: #2c2416;
+  --rose: #d4a5a5;
+  --shadow: 0 8px 32px rgba(44, 36, 22, 0.08);
+  --radius: 8px;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-script: 'Great Vibes', cursive;
+  --font-sans: 'Montserrat', system-ui, sans-serif;
+}
