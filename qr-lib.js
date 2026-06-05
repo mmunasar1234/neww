@@ -27,8 +27,25 @@ window.QRLib = {
 
   buildUrl(key, data, siteUrl) {
     const base = this.getSiteBase(siteUrl || (data && data.siteUrl));
-    const path = 'class.html?w=' + encodeURIComponent(key);
+    const qs = 'w=' + encodeURIComponent(key) + '&load=web';
+    const path = 'class.html?' + qs;
     return base ? base + '/' + path : path;
+  },
+
+  ensureWebLoad(url) {
+    try {
+      const u = new URL(url, location.href);
+      if (!u.pathname.includes('class.html')) {
+        u.pathname = u.pathname.replace(/scan\.html$/, 'class.html');
+        if (!u.pathname.includes('class.html')) u.pathname = u.pathname.replace(/[^/]*$/, 'class.html');
+      }
+      u.searchParams.set('load', 'web');
+      const w = u.searchParams.get('w') || u.searchParams.get('key') || 'index';
+      u.searchParams.set('w', w);
+      return u.href;
+    } catch {
+      return url;
+    }
   },
 
   isWebReady(url) {
@@ -43,18 +60,17 @@ window.QRLib = {
     const safe = encodeURIComponent(text);
     const isWeb = this.isWebReady(text);
     const warn = meta.warning || (!isWeb
-      ? 'Geli GitHub URL kor ku qoran. Kadib soo dejiso index.json oo ku rid folder-ka data/'
-      : '');
+      ? 'Geli GitHub URL. Soo dejiso index.json oo ku rid data/ ka dib upload.'
+      : 'Scan telefoon → xogta web-ka (data/' + (meta.key || 'index') + '.json) ayaa la soo booqdaa');
 
     box.innerHTML =
       '<img id="qrImage" width="260" height="260" alt="QR Code" ' +
       'style="display:block;margin:0 auto;border-radius:4px" ' +
       'src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=14&color=2c2416&bgcolor=ffffff&data=' + safe + '">' +
       (warn ? '<p class="qr-warn" style="font-size:0.78rem;color:#ffb74d;margin-top:0.75rem;line-height:1.5">' + warn + '</p>' : '') +
-      '<p style="font-size:0.72rem;color:rgba(255,255,255,0.5);margin-top:0.5rem">QR Link (gaaban):</p>' +
+      '<p style="font-size:0.72rem;color:rgba(255,255,255,0.5);margin-top:0.5rem">QR → Web xogta:</p>' +
       '<a href="' + text + '" target="_blank" rel="noopener" ' +
-      'style="display:block;font-size:0.8rem;color:var(--gold,#c9a962);margin-top:0.35rem;word-break:break-all;text-decoration:underline">' + text + '</a>' +
-      '<p style="font-size:0.68rem;color:rgba(255,255,255,0.35);margin-top:0.5rem">' + text.length + ' xaraf — xogtu waa data/' + (meta.key || 'index') + '.json</p>';
+      'style="display:block;font-size:0.8rem;color:var(--gold,#c9a962);margin-top:0.35rem;word-break:break-all;text-decoration:underline">' + text + '</a>';
 
     box.style.display = 'block';
   },
@@ -72,7 +88,7 @@ window.QRLib = {
     try {
       const url = new URL(text, location.href);
       const key = url.searchParams.get('w') || url.searchParams.get('key');
-      if (key) return { _key: key, _url: text };
+      if (key) return { _key: key, _url: this.ensureWebLoad(text) };
 
       const d = url.searchParams.get('d');
       if (d) {
@@ -90,7 +106,7 @@ window.QRLib = {
     const params = new URLSearchParams(location.search);
     const w = params.get('w') || params.get('key');
     if (!w || params.get('d')) return false;
-    location.replace('class.html?w=' + encodeURIComponent(w));
+    location.replace('class.html?w=' + encodeURIComponent(w) + '&load=web');
     return true;
   }
 };

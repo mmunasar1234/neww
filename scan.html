@@ -80,14 +80,14 @@
       if (scanner) scanner.stop().catch(function () {});
 
       if (result._url) {
-        showStatus('Martiqaadka la furayaa...', 'ok');
-        location.href = result._url.replace('scan.html', 'class.html');
+        showStatus('Xogta web-ka la soo rarayaa...', 'ok');
+        location.href = QRLib.ensureWebLoad(result._url);
         return;
       }
 
       const key = result._key || 'index';
-      showStatus('Martiqaadka la furayaa...', 'ok');
-      location.href = 'class.html?w=' + encodeURIComponent(key);
+      showStatus('Xogta web-ka la soo rarayaa...', 'ok');
+      location.href = 'class.html?w=' + encodeURIComponent(key) + '&load=web';
     }
 
     document.getElementById('btnManual').addEventListener('click', function () {

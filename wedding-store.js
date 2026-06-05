@@ -2,7 +2,20 @@ window.WeddingStore = {
   DATA_DIR: 'data/',
 
   save(key, data) {
-    localStorage.setItem(WeddingBase.STORAGE_PREFIX + key, JSON.stringify(data));
+    const clean = this.cleanForSave(data);
+    localStorage.setItem(WeddingBase.STORAGE_PREFIX + key, JSON.stringify(clean));
+  },
+
+  cleanForSave(data) {
+    if (!data || typeof data !== 'object') return data;
+    const copy = JSON.parse(JSON.stringify(data));
+    if (copy.gallery && Array.isArray(copy.gallery)) {
+      copy.gallery = copy.gallery.map(function (g) {
+        if (typeof g === 'string') return g;
+        return { src: g.src, maxW: g.maxW, maxH: g.maxH, quality: g.quality };
+      });
+    }
+    return copy;
   },
 
   load(key) {
@@ -19,20 +32,20 @@ window.WeddingStore = {
     return this.DATA_DIR + encodeURIComponent(key) + '.json';
   },
 
-  async fetchRemote(key) {
+  async fetchRemote(key, noCache) {
     try {
-      const res = await fetch(this.dataFilePath(key) + '?t=' + Date.now());
+      const url = this.dataFilePath(key) + (noCache ? '?t=' + Date.now() : '');
+      const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) return null;
       const data = await res.json();
-      this.save(key, data);
-      return data;
+      return this.cleanForSave(data);
     } catch {
       return null;
     }
   },
 
   downloadJson(key, data) {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(this.cleanForSave(data), null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = key + '.json';
@@ -41,7 +54,7 @@ window.WeddingStore = {
   },
 
   encodeForQR(data) {
-    const json = JSON.stringify(data);
+    const json = JSON.stringify(this.cleanForSave(data));
     const b64 = btoa(unescape(encodeURIComponent(json)));
     return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   },
